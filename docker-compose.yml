@@ -1,23 +1,36 @@
 version: '3.8'
 
 services:
+  # Nginx API Gateway
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: nginx-barcelo-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - authenticate-api
+      - usuarios-api
+      - reservas-api
+    networks:
+      - barcelo-network
+    restart: unless-stopped
+
   # API de Autenticación
   authenticate-api:
-    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    # image: mcr.microsoft.com/dotnet/aspnet:8.0
     container_name: authenticate-barcelo
     build:
-      context: ./Authenticate-Barcelo
+      context: ./Authenticate-Barcelo/
       dockerfile: Dockerfile
-    ports:
-      - "5001:8080"
+    # Puertos expuestos solo internamente, acceso vía nginx-gateway
+    # ports:
+    #   - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AuthenticateDB;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
-      - JwtSettings__SecretKey=YourSuperSecretKeyForJWTTokenGeneration123456
-      - JwtSettings__Issuer=AuthenticateBarceloAPI
-      - JwtSettings__Audience=BarceloApis
-      - JwtSettings__ExpirationMinutes=60
     depends_on:
       - sqlserver
     networks:
@@ -26,13 +39,14 @@ services:
 
   # API de Usuarios
   usuarios-api:
-    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    # image: mcr.microsoft.com/dotnet/aspnet:9.0
     container_name: usuarios-barcelo
     build:
       context: ./Usuarios-Barcelo
       dockerfile: Dockerfile
-    ports:
-      - "5002:8080"
+    # Puertos expuestos solo internamente, acceso vía nginx-gateway
+    # ports:
+    #   - "5002:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
@@ -50,13 +64,14 @@ services:
 
   # API de Reservas
   reservas-api:
-    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    # image: mcr.microsoft.com/dotnet/aspnet:8.0
     container_name: reservas-barcelo
     build:
       context: ./Reservas-Barcelo
       dockerfile: Dockerfile
-    ports:
-      - "5003:8080"
+    # Puertos expuestos solo internamente, acceso vía nginx-gateway
+    # ports:
+    #   - "5003:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
